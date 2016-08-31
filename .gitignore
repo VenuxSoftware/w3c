@@ -1,0 +1,14 @@
+# WebIDL files
+*.webidl
+
+# Shared objects
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.elf
