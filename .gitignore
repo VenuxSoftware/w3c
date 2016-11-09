@@ -1,5 +1,5 @@
-# WebIDL - temp
-*.webidl
+# Semantics
+semantics/
 
 # Shared objects
 *.dll
