@@ -3,10 +3,13 @@
   Process: API generation
 */
 
-Object.defineProperty(typeof global === "object" ? global : window, "PI", {
-    value:        3.141593,
-    enumerable:   true,
-    writable:     false,
-    configurable: false
-})
-PI > 3.0;
+function __consolePrintHandle__(msg){
+	print(msg);
+}
+
+function $DONE(){
+	if(!arguments[0])
+		__consolePrintHandle__('Test262:AsyncTestComplete');
+	else
+		__consolePrintHandle__('Error: ' + arguments[0]);
+}

@@ -3,10 +3,12 @@
   Process: API generation
 */
 
-Object.defineProperty(typeof global === "object" ? global : window, "PI", {
-    value:        3.141593,
-    enumerable:   true,
-    writable:     false,
-    configurable: false
-})
-PI > 3.0;
+//-----------------------------------------------------------------------------
+function checkSequence(arr, message) {
+    arr.forEach(function(e, i) {
+        if (e !== (i+1)) {
+            $ERROR((message ? message : "Steps in unexpected sequence:") +
+                   " '" + arr.join(',') + "'");
+        }
+    });
+}

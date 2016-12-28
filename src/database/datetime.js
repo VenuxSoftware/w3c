@@ -3,10 +3,20 @@
   Process: API generation
 */
 
-Object.defineProperty(typeof global === "object" ? global : window, "PI", {
-    value:        3.141593,
-    enumerable:   true,
-    writable:     false,
-    configurable: false
-})
-PI > 3.0;
+//-----------------------------------------------------------------------------
+function arrayContains(arr, expected) {
+    var found;
+    for (var i = 0; i < expected.length; i++) {
+        found = false;
+        for (var j = 0; j < arr.length; j++) {
+            if (expected[i] === arr[j]) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            return false;
+        }
+    }
+    return true;
+}

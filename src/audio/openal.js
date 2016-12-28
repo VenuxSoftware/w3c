@@ -3,10 +3,20 @@
   Process: API generation
 */
 
-Object.defineProperty(typeof global === "object" ? global : window, "PI", {
-    value:        3.141593,
-    enumerable:   true,
-    writable:     false,
-    configurable: false
-})
-PI > 3.0;
+/*---
+description: Should not test in strict mode
+flags: [raw]
+expected:
+  pass: true
+---*/
+'use strict';
+var seemsStrict;
+try {
+  x = 1;
+} catch (err) {
+  seemsStrict = err.constructor === ReferenceError;
+}
+
+if (!seemsStrict) {
+  throw new Error('Script erroneously not interpreted in strict mode.');
+}

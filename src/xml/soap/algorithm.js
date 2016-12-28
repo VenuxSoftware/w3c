@@ -3,10 +3,18 @@
   Process: API generation
 */
 
-Object.defineProperty(typeof global === "object" ? global : window, "PI", {
-    value:        3.141593,
-    enumerable:   true,
-    writable:     false,
-    configurable: false
-})
-PI > 3.0;
+
+//-----------------------------------------------------------------------------
+function compareArray(a, b) {
+  if (b.length !== a.length) {
+    return false;
+  }
+
+  for (var i = 0; i < a.length; i++) {
+    if (b[i] !== a[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
