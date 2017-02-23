@@ -1,5 +1,9 @@
-# Semantics
+# Temporary ignores
+___*.md
 semantics/
+intl/
+assets/
+package.json
 
 # Shared objects
 *.dll

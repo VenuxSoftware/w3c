@@ -1,5 +1,5 @@
-# Handle line endings automatically for files detected as text
-# and leave all files detected as binary untouched.
+# Handle line endings automatically for files detected as
+# text and leave all files detected as binary untouched.
 * text=auto
 
 # The above will handle all files NOT found below
@@ -24,3 +24,12 @@
 *.png           binary
 *.so            binary
 *.zip           binary
+*.bmp           binary
+*.dds           binary
+*.hdr           binary
+*.mng           binary
+*.pcx           binary
+*.psd           binary
+*.tiff          binary
+*.tif           binary
+*.xpm           binary
