@@ -3,54 +3,24 @@
   Process: API generation
 */
 
-'use strict';
+// Copyright (C) 2015 the V8 project authors. All rights reserved.
+// This code is governed by the BSD license found in the LICENSE file.
+/**
+ * Verify that the given date object's Number representation describes the
+ * correct number of milliseconds since the Unix epoch relative to the local
+ * time zone (as interpreted at the specified date).
+ *
+ * @param {Date} date
+ * @param {Number} expectedMs
+ */
+function assertRelativeDateMs(date, expectedMs) {
+  var actualMs = date.valueOf();
+  var localOffset = date.getTimezoneOffset() * 60000;
 
-const fs = require('fs');
-const Path = require('path');
-
-module.exports = findTest262Dir;
-function findTest262Dir(globber) {
-  const set = globber.minimatch.set;
-  let baseDir;
-  for (let i = 0; i < set.length; i++) {
-    let base = [];
-
-    for (let j = 0; j < set[i].length; j++) {
-      if (typeof set[i][j] !== 'string') {
-        break;
-      }
-
-      base.push(set[i][j]);
-    }
-
-    baseDir = findTest262Root(base.join("/"));
-
-    if (baseDir) {
-      break;
-    }
+  if (actualMs - localOffset !== expectedMs) {
+    $ERROR(
+      'Expected ' + date + ' to be ' + expectedMs +
+      ' milliseconds from the Unix epoch'
+    );
   }
-
-  return baseDir;
-}
-
-function findTest262Root(path) {
-  const stat = fs.statSync(path);
-  if (stat.isFile()) {
-    path = Path.dirname(path);
-  }
-
-  const contents = fs.readdirSync(path)
-  if (contents.indexOf('README.md') > -1
-      && contents.indexOf('test') > -1
-      && contents.indexOf('harness') > -1) {
-    return path;
-  }
-
-  const parent = Path.resolve(path, '../');
-
-  if (parent === path) {
-    return null;
-  }
-
-  return findTest262Root(parent);
 }

@@ -3,20 +3,8 @@
   Process: API generation
 */
 
-/*---
-description: Should not test in strict mode
-flags: [raw]
-expected:
-  pass: true
----*/
-'use strict';
-var seemsStrict;
-try {
-  x = 1;
-} catch (err) {
-  seemsStrict = err.constructor === ReferenceError;
-}
-
-if (!seemsStrict) {
-  throw new Error('Script erroneously not interpreted in strict mode.');
-}
+/**
+ * This regex makes a best-effort determination that the tested string matches
+ * the NativeFunction grammar production without requiring a correct tokeniser.
+ */
+const NATIVE_FUNCTION_RE = /\bfunction\b[\s\S]*\([\s\S]*\)[\s\S]*\{[\s\S]*\[[\s\S]*\bnative\b[\s\S]+\bcode\b[\s\S]*\][\s\S]*\}/;

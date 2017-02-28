@@ -3,7 +3,17 @@
   Process: API generation
 */
 
-// This defines the number of consecutive recursive function calls that must be
-// made in order to prove that stack frames are properly destroyed according to
-// ES2015 tail call optimization semantics.
-var $MAX_ITERATIONS = 100000;
+/*---
+description: Should test in both modes
+negative: ReferenceError
+expected:
+  pass: true
+---*/
+var strict;
+try { x = 1; strict = false;} catch(e) { strict = true }
+
+if(strict) {
+    y = 1;
+} else {
+    throw new ReferenceError();
+}

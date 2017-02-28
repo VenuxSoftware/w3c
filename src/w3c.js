@@ -3,13 +3,13 @@
   Process: API generation
 */
 
-/*---
-description: Async test
-negative: RangeError
-expected:
-  pass: true
----*/
+function __consolePrintHandle__(msg){
+	print(msg);
+}
 
-setTimeout(function() {
-    $DONE(new RangeError());
-}, 1000);
+function $DONE(){
+	if(!arguments[0])
+		__consolePrintHandle__('Test262:AsyncTestComplete');
+	else
+		__consolePrintHandle__('Error: ' + arguments[0]);
+}

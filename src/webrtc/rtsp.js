@@ -3,127 +3,128 @@
   Process: API generation
 */
 
-// Copyright 2012 Mozilla Corporation. All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
+var test = require('tape');
+var fs = require('fs');
+var path = require('path');
+var cp = require('child_process');
 
-/**
- * @description Tests that obj meets the requirements for built-in objects
- *     defined by the introduction of chapter 15 of the ECMAScript Language Specification.
- * @param {Object} obj the object to be tested.
- * @param {boolean} isFunction whether the specification describes obj as a function.
- * @param {boolean} isConstructor whether the specification describes obj as a constructor.
- * @param {String[]} properties an array with the names of the built-in properties of obj,
- *     excluding length, prototype, or properties with non-default attributes.
- * @param {number} length for functions only: the length specified for the function
- *     or derived from the argument list.
- * @author Norbert Lindenberg
- */
+Promise.all([
+  run(),
+  runPrelude()
+])
+.then(validate)
+.catch(reportRunError);
 
-function testBuiltInObject(obj, isFunction, isConstructor, properties, length) {
+function reportRunError(e) {
+  console.error("Error running tests", e.stack);
+  process.exit(1);
+}
 
-    if (obj === undefined) {
-        $ERROR("Object being tested is undefined.");
-    }
+function run() {
+  return new Promise((resolve, reject) => {
+    var stdout = '';
+    var stderr = '';
 
-    var objString = Object.prototype.toString.call(obj);
-    if (isFunction) {
-        if (objString !== "[object Function]") {
-            $ERROR("The [[Class]] internal property of a built-in function must be " +
-                    "\"Function\", but toString() returns " + objString);
-        }
-    } else {
-        if (objString !== "[object Object]") {
-            $ERROR("The [[Class]] internal property of a built-in non-function object must be " +
-                    "\"Object\", but toString() returns " + objString);
-        }
-    }
+    var child = cp.fork('bin/run.js', [
+      '--hostType', 'node',
+      '--hostPath', process.execPath,
+      '-r', 'json',
+      '--includesDir', './test/test-includes',
+      'test/collateral/**/*.js'], {silent: true});
 
-    if (!Object.isExtensible(obj)) {
-        $ERROR("Built-in objects must be extensible.");
-    }
+    child.stdout.on('data', function(d) { stdout += d });
+    child.stderr.on('data', function(d) { stderr += d });
+    child.on('exit', function() {
+      if (stderr) {
+        return reject(new Error("Got stderr: " + stderr));
+      }
 
-    if (isFunction && Object.getPrototypeOf(obj) !== Function.prototype) {
-        $ERROR("Built-in functions must have Function.prototype as their prototype.");
-    }
+      try {
+        resolve(JSON.parse(stdout));
+      } catch(e) {
+        reject(e);
+      }
+    })
+  });
+}
 
-    if (isConstructor && Object.getPrototypeOf(obj.prototype) !== Object.prototype) {
-        $ERROR("Built-in prototype objects must have Object.prototype as their prototype.");
-    }
+function validate(records) {
+  const normal = records[0];
+  const prelude = records[1];
 
-    // verification of the absence of the [[Construct]] internal property has
-    // been moved to the end of the test
-    
-    // verification of the absence of the prototype property has
-    // been moved to the end of the test
+  validateNormal(normal);
+  validatePrelude(prelude);
+}
 
-    if (isFunction) {
-        
-        if (typeof obj.length !== "number" || obj.length !== Math.floor(obj.length)) {
-            $ERROR("Built-in functions must have a length property with an integer value.");
-        }
-    
-        if (obj.length !== length) {
-            $ERROR("Function's length property doesn't have specified value; expected " +
-                length + ", got " + obj.length + ".");
-        }
+function validateNormal(records) {
+  records.forEach(record => {
+    test(record.attrs.description, function (t) {
+      t.assert(record.attrs.expected, 'Test has an `expected` frontmatter');
+      if (!record.attrs.expected) {
+        // can't do anything else
+        t.end();
+        return;
+      }
 
-        var desc = Object.getOwnPropertyDescriptor(obj, "length");
-        if (desc.writable) {
-            $ERROR("The length property of a built-in function must not be writable.");
-        }
-        if (desc.enumerable) {
-            $ERROR("The length property of a built-in function must not be enumerable.");
-        }
-        if (!desc.configurable) {
-            $ERROR("The length property of a built-in function must be configurable.");
-        }
-    }
+      t.equal(record.result.pass, record.attrs.expected.pass, 'Test passes or fails as expected');
+      
+      if (record.attrs.expected.message) {
+        t.equal(record.result.message, record.attrs.expected.message, 'Test fails with appropriate message');
+      }
 
-    properties.forEach(function(prop) {
-        var desc = Object.getOwnPropertyDescriptor(obj, prop);
-        if (desc === undefined) {
-            $ERROR("Missing property " + prop + ".");
-        }
-        // accessor properties don't have writable attribute
-        if (desc.hasOwnProperty("writable") && !desc.writable) {
-            $ERROR("The " + prop + " property of this built-in object must be writable.");
-        }
-        if (desc.enumerable) {
-            $ERROR("The " + prop + " property of this built-in object must not be enumerable.");
-        }
-        if (!desc.configurable) {
-            $ERROR("The " + prop + " property of this built-in object must be configurable.");
-        }
+      t.end();
     });
+  });
+}
 
-    // The remaining sections have been moved to the end of the test because
-    // unbound non-constructor functions written in JavaScript cannot possibly
-    // pass them, and we still want to test JavaScript implementations as much
-    // as possible.
-    
-    var exception;
-    if (isFunction && !isConstructor) {
-        // this is not a complete test for the presence of [[Construct]]:
-        // if it's absent, the exception must be thrown, but it may also
-        // be thrown if it's present and just has preconditions related to
-        // arguments or the this value that this statement doesn't meet.
-        try {
-            /*jshint newcap:false*/
-            var instance = new obj();
-        } catch (e) {
-            exception = e;
-        }
-        if (exception === undefined || exception.name !== "TypeError") {
-            $ERROR("Built-in functions that aren't constructors must throw TypeError when " +
-                "used in a \"new\" statement.");
-        }
-    }
+function runPrelude() {
+  return new Promise((resolve, reject) => {
+    var stdout = '';
+    var stderr = '';
 
-    if (isFunction && !isConstructor && obj.hasOwnProperty("prototype")) {
-        $ERROR("Built-in functions that aren't constructors must not have a prototype property.");
-    }
+    var child = cp.fork('bin/run.js', [
+      '--hostType', 'node',
+      '--hostPath', process.execPath,
+      '-r', 'json',
+      '--includesDir', './test/test-includes',
+      '--prelude', './test/test-prelude.js',
+      'test/collateral/bothStrict.js'], {silent: true});
 
-    // passed the complete test!
-    return true;
+    child.stdout.on('data', function(d) { stdout += d });
+    child.stderr.on('data', function(d) { stderr += d });
+    child.on('exit', function() {
+      if (stderr) {
+        return reject(new Error("Got stderr: " + stderr));
+      }
+
+      try {
+        resolve(JSON.parse(stdout));
+      } catch(e) {
+        reject(e);
+      }
+    })
+  })
+}
+
+function validatePrelude(records) {
+  records.forEach(record => {
+    test(record.attrs.description + ' with prelude', function (t) {
+      t.assert(record.attrs.expected, 'Test has an `expected` frontmatter');
+      if (!record.attrs.expected) {
+        // can't do anything else
+        t.end();
+        return;
+      }
+
+      t.equal(record.result.pass, record.attrs.expected.pass, 'Test passes or fails as expected');
+      
+      if (record.attrs.expected.message) {
+        t.equal(record.result.message, record.attrs.expected.message, 'Test fails with appropriate message');
+      }
+
+      t.assert(record.rawResult.stdout.indexOf("prelude!") > -1, 'Has prelude content');
+      t.end();
+    });
+  });
 }
 

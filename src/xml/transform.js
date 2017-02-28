@@ -3,25 +3,22 @@
   Process: API generation
 */
 
-function allowProxyTraps(overrides) {
-    function throwTest262Error(msg) {
-        return function () { throw new Test262Error(msg); };
-    }
-    if (!overrides) { overrides = {}; }
-    return {
-        getPrototypeOf: overrides.getPrototypeOf || throwTest262Error('[[GetPrototypeOf]] trap called'),
-        setPrototypeOf: overrides.setPrototypeOf || throwTest262Error('[[SetPrototypeOf]] trap called'),
-        isExtensible: overrides.isExtensible || throwTest262Error('[[IsExtensible]] trap called'),
-        preventExtensions: overrides.preventExtensions || throwTest262Error('[[PreventExtensions]] trap called'),
-        getOwnPropertyDescriptor: overrides.getOwnPropertyDescriptor || throwTest262Error('[[GetOwnProperty]] trap called'),
-        has: overrides.has || throwTest262Error('[[HasProperty]] trap called'),
-        get: overrides.get || throwTest262Error('[[Get]] trap called'),
-        set: overrides.set || throwTest262Error('[[Set]] trap called'),
-        deleteProperty: overrides.deleteProperty || throwTest262Error('[[Delete]] trap called'),
-        defineProperty: overrides.defineProperty || throwTest262Error('[[DefineOwnProperty]] trap called'),
-        enumerate: throwTest262Error('[[Enumerate]] trap called: this trap has been removed'),
-        ownKeys: overrides.ownKeys || throwTest262Error('[[OwnPropertyKeys]] trap called'),
-        apply: overrides.apply || throwTest262Error('[[Call]] trap called'),
-        construct: overrides.construct || throwTest262Error('[[Construct]] trap called')
-    };
+'use strict';
+const util = require('util');
+
+module.exports = scenariosForTest;
+function scenariosForTest(test) {
+  if(!test.attrs.flags.onlyStrict && !test.attrs.flags.noStrict && !test.attrs.flags.raw) {
+    test.strictMode = false;
+
+    var copy = util._extend({}, test);
+    copy.attrs = util._extend({}, test.attrs);
+    copy.attrs.description += ' (Strict Mode)'
+    copy.contents = '"use strict";\n' + copy.contents;
+    // test both modes
+    return [test, copy];
+  } else {
+    return [test];
+  }
 }
+

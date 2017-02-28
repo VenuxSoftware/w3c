@@ -3,36 +3,12 @@
   Process: API generation
 */
 
-'use strict';
-
-const EventEmitter = require('events');
-
-function resultsEmitter(results) {
-  let started = false;
-  const emitter = new EventEmitter();
-  results.forEach(
-    function (test) {
-      if (!started) {
-        emitter.emit('start');
-        started = true;
-      }
-
-      emitter.emit('test end', test);
-
-      if (test.result.pass) {
-        emitter.emit('pass', test);
-      } else {
-        emitter.emit('fail', test);
-      }
-    },
-    function (err) {
-      console.error("ERROR", err);
-    },
-    function () {
-      emitter.emit('end')
-    });
-
-  return emitter;
-}
-
-module.exports = resultsEmitter;
+/**
+ * A collection of NaN values produced from expressions that have been observed
+ * to create distinct bit representations on various platforms. These provide a
+ * weak basis for assertions regarding the consistent canonicalization of NaN
+ * values in Array buffers.
+ */
+var distinctNaNs = [
+  0/0, Infinity/Infinity, -(0/0), Math.pow(-1, 0.5), -Math.pow(-1, 0.5)
+];
