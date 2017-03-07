@@ -3,64 +3,78 @@
   Process: API generation
 */
 
-module.exports = function validate(test) {
-  const result = test.rawResult;
-  const isNegative = test.attrs.flags.negative || test.attrs.negative;
-  const ranToFinish = result.stdout.indexOf('test262/done') > -1;
-  const desc = (test.attrs.description || '').trim();
-  
-  if (result.timeout) {
-    return {
-      pass: false,
-      message: 'Test timed out'
+// Copyright (C) 2015 André Bargull. All rights reserved.
+// This code is governed by the BSD license found in the LICENSE file.
+
+/**
+ * Array containing every typed array constructor.
+ */
+var typedArrayConstructors = [
+  Float64Array,
+  Float32Array,
+  Int32Array,
+  Int16Array,
+  Int8Array,
+  Uint32Array,
+  Uint16Array,
+  Uint8Array,
+  Uint8ClampedArray
+];
+
+/**
+ * The %TypedArray% intrinsic constructor function.
+ */
+var TypedArray = Object.getPrototypeOf(Int8Array);
+
+/**
+ * Callback for testing a typed array constructor.
+ *
+ * @callback typedArrayConstructorCallback
+ * @param {Function} Constructor the constructor object to test with.
+ */
+
+/**
+ * Calls the provided function for every typed array constructor.
+ *
+ * @param {typedArrayConstructorCallback} f - the function to call for each typed array constructor.
+ * @param {Array} selected - An optional Array with filtered typed arrays
+ */
+function testWithTypedArrayConstructors(f, selected) {
+  var constructors = selected || typedArrayConstructors;
+  for (var i = 0; i < constructors.length; ++i) {
+    var constructor = constructors[i];
+    try {
+      f(constructor);
+    } catch (e) {
+      e.message += " (Testing with " + constructor.name + ".)";
+      throw e;
     }
   }
-  if (!isNegative) {
-    if (result.error !== null) {
-      if (result.error.name === 'Test262Error') {
-        return {
-          pass: false,
-          message: result.error.message
-        };
-      } else {
-        return {
-          pass: false,
-          message: `Expected no error, got ${result.error.name}: ${result.error.message}`
-        };
+}
+
+/**
+ * Helper for conversion operations on TypedArrays, the expected values
+ * properties are indexed in order to match the respective value for each
+ * TypedArray constructor
+ * @param  {Function} fn - the function to call for each constructor and value.
+ *                         will be called with the constructor, value, expected
+ *                         value, and a initial value that can be used to avoid
+ *                         a false positive with an equivalent expected value.
+ */
+function testTypedArrayConversions(byteConversionValues, fn) {
+  var values = byteConversionValues.values;
+  var expected = byteConversionValues.expected;
+
+  testWithTypedArrayConstructors(function(TA) {
+    var name = TA.name.slice(0, -5);
+
+    return values.forEach(function(value, index) {
+      var exp = expected[name][index];
+      var initial = 0;
+      if (exp === 0) {
+        initial = 1;
       }
-    } else if (!ranToFinish && !test.attrs.flags.raw) {
-      return {
-        pass: false,
-        message: `Test did not run to completion`
-      };
-    } else {
-      return { pass: true };
-    }
-  } else {
-    if (test.attrs.flags.negative) {
-      if (result.error) {
-        return { pass: true };
-      } else {
-        return {
-          pass: false,
-          message: `Expected test to throw some error`
-        };
-      }
-    } else {
-      if (!result.error) {
-        return {
-          pass: false,
-          message: `Expected test to throw error matching ${test.attrs.negative}, but did not throw error`
-        };
-      } else if (result.error.name.match(new RegExp(test.attrs.negative)) ||
-          result.error.message === test.attrs.negative) {
-        return { pass: true };
-      } else {
-        return {
-          pass: false,
-          message: `Expected test to throw error matching ${test.attrs.negative}, got ${result.error.name}: ${result.error.message}`
-        };
-      }
-    }
-  }
+      fn(TA, value, exp, initial);
+    });
+  });
 }

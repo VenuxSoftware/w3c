@@ -3,24 +3,84 @@
   Process: API generation
 */
 
-// Copyright (C) 2015 the V8 project authors. All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
-/**
- * Verify that the given date object's Number representation describes the
- * correct number of milliseconds since the Unix epoch relative to the local
- * time zone (as interpreted at the specified date).
- *
- * @param {Date} date
- * @param {Number} expectedMs
- */
-function assertRelativeDateMs(date, expectedMs) {
-  var actualMs = date.valueOf();
-  var localOffset = date.getTimezoneOffset() * 60000;
+function assert(mustBeTrue, message) {
+    if (mustBeTrue === true) {
+        return;
+    }
 
-  if (actualMs - localOffset !== expectedMs) {
-    $ERROR(
-      'Expected ' + date + ' to be ' + expectedMs +
-      ' milliseconds from the Unix epoch'
-    );
-  }
+    if (message === undefined) {
+        message = 'Expected true but got ' + String(mustBeTrue);
+    }
+    $ERROR(message);
 }
+
+assert._isSameValue = function (a, b) {
+    if (a === b) {
+        // Handle +/-0 vs. -/+0
+        return a !== 0 || 1 / a === 1 / b;
+    }
+
+    // Handle NaN vs. NaN
+    return a !== a && b !== b;
+};
+
+assert.sameValue = function (actual, expected, message) {
+    if (assert._isSameValue(actual, expected)) {
+        return;
+    }
+
+    if (message === undefined) {
+        message = '';
+    } else {
+        message += ' ';
+    }
+
+    message += 'Expected SameValue(«' + String(actual) + '», «' + String(expected) + '») to be true';
+
+    $ERROR(message);
+};
+
+assert.notSameValue = function (actual, unexpected, message) {
+    if (!assert._isSameValue(actual, unexpected)) {
+        return;
+    }
+
+    if (message === undefined) {
+        message = '';
+    } else {
+        message += ' ';
+    }
+
+    message += 'Expected SameValue(«' + String(actual) + '», «' + String(unexpected) + '») to be false';
+
+    $ERROR(message);
+};
+
+assert.throws = function (expectedErrorConstructor, func, message) {
+    if (typeof func !== "function") {
+        $ERROR('assert.throws requires two arguments: the error constructor ' +
+            'and a function to run');
+        return;
+    }
+    if (message === undefined) {
+        message = '';
+    } else {
+        message += ' ';
+    }
+
+    try {
+        func();
+    } catch (thrown) {
+        if (typeof thrown !== 'object' || thrown === null) {
+            message += 'Thrown value was not an object!';
+            $ERROR(message);
+        } else if (thrown.constructor !== expectedErrorConstructor) {
+            message += 'Expected a ' + expectedErrorConstructor.name + ' but got a ' + thrown.constructor.name;
+            $ERROR(message);
+        }
+        return;
+    }
+
+    message += 'Expected a ' + expectedErrorConstructor.name + ' to be thrown but no exception was thrown at all';
+    $ERROR(message);
+};

@@ -3,13 +3,10 @@
   Process: API generation
 */
 
-function __consolePrintHandle__(msg){
-	print(msg);
-}
-
-function $DONE(){
-	if(!arguments[0])
-		__consolePrintHandle__('Test262:AsyncTestComplete');
-	else
-		__consolePrintHandle__('Error: ' + arguments[0]);
-}
+/*---
+description: Should not test in strict mode
+flags: [noStrict]
+expected:
+  pass: true
+---*/
+x = 5;

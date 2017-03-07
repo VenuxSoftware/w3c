@@ -3,6 +3,9 @@
   Process: API generation
 */
 
-function $DETACHBUFFER(buffer) {
-  throw new Test262Error("No method available to detach an ArrayBuffer");
-}
+importScripts('speakGenerator.js');
+
+onmessage = function(event) {
+  postMessage(generateSpeech(event.data.text, event.data.args));
+};
+

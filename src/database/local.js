@@ -4,13 +4,11 @@
 */
 
 /*---
-description: Async test
+description: Should not test in sloppy mode
+flags: [onlyStrict]
+negative: ReferenceError
 expected:
   pass: true
 ---*/
-
-var p = new Promise(function(resolve) {
-  resolve();
-});
-
-p.then($DONE, $DONE);
+x = 5;
+$ERROR('Not in strict mode');

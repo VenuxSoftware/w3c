@@ -3,8 +3,18 @@
   Process: API generation
 */
 
-/**
- * This regex makes a best-effort determination that the tested string matches
- * the NativeFunction grammar production without requiring a correct tokeniser.
- */
-const NATIVE_FUNCTION_RE = /\bfunction\b[\s\S]*\([\s\S]*\)[\s\S]*\{[\s\S]*\[[\s\S]*\bnative\b[\s\S]+\bcode\b[\s\S]*\][\s\S]*\}/;
+
+//-----------------------------------------------------------------------------
+function compareArray(a, b) {
+  if (b.length !== a.length) {
+    return false;
+  }
+
+  for (var i = 0; i < a.length; i++) {
+    if (b[i] !== a[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+

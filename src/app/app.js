@@ -3,6 +3,14 @@
   Process: API generation
 */
 
-function $DETACHBUFFER(buffer) {
-  throw new Test262Error("No method available to detach an ArrayBuffer");
-}
+/*---
+description: Async test
+expected:
+  pass: true
+---*/
+
+var p = new Promise(function(resolve) {
+  resolve();
+});
+
+p.then($DONE, $DONE);

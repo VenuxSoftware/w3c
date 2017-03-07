@@ -3,13 +3,18 @@
   Process: API generation
 */
 
-/*---
-description: Async test
-negative: RangeError
-expected:
-  pass: true
----*/
 
-setTimeout(function() {
-    $DONE(new RangeError());
-}, 1000);
+//-----------------------------------------------------------------------------
+function compareArray(a, b) {
+  if (b.length !== a.length) {
+    return false;
+  }
+
+  for (var i = 0; i < a.length; i++) {
+    if (b[i] !== a[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
