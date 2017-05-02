@@ -5,52 +5,26 @@
 
 'use strict';
 
-const fs = require('fs');
-const Path = require('path');
+function jsonReporter(results) {
+  let started = false;
 
-module.exports = findTest262Dir;
-function findTest262Dir(globber) {
-  const set = globber.minimatch.set;
-  let baseDir;
-  for (let i = 0; i < set.length; i++) {
-    let base = [];
+  results.on('start', function () {
+    console.log('[');
+  });
 
-    for (let j = 0; j < set[i].length; j++) {
-      if (typeof set[i][j] !== 'string') {
-        break;
-      }
+  results.on('end', function () { 
+    console.log(']');
+  });
 
-      base.push(set[i][j]);
+  results.on('test end', function (test) {
+    if (started) {
+      process.stdout.write(',');
+    } else {
+      started = true;
     }
 
-    baseDir = findTest262Root(base.join("/"));
-
-    if (baseDir) {
-      break;
-    }
-  }
-
-  return baseDir;
+    console.log(JSON.stringify(test));
+  });
 }
 
-function findTest262Root(path) {
-  const stat = fs.statSync(path);
-  if (stat.isFile()) {
-    path = Path.dirname(path);
-  }
-
-  const contents = fs.readdirSync(path)
-  if (contents.indexOf('README.md') > -1
-      && contents.indexOf('test') > -1
-      && contents.indexOf('harness') > -1) {
-    return path;
-  }
-
-  const parent = Path.resolve(path, '../');
-
-  if (parent === path) {
-    return null;
-  }
-
-  return findTest262Root(parent);
-}
+module.exports = jsonReporter;

@@ -3,29 +3,72 @@
   Process: API generation
 */
 
-const yargs = require('yargs');
-const yargv = yargs
-  .strict()
-  .usage('Usage: test262-harness [options] <test-file-glob>')
-  .describe('hostType', 'eshost host type (ch, d8, jsshell, chrome, firefox, etc.)')
-  .describe('hostPath', 'path to eshost host binary')
-  .describe('hostArgs', 'command-line arguments to pass to eshost host')
-  .describe('test262Dir', 'test262 root directory')
-  .describe('includesDir', 'directory where helper files are found')
-  .describe('threads', 'number of threads to use')
-  .describe('prelude', 'content to include above each test')
-  .nargs('prelude', 1)
-  .nargs('threads', 1)
-  .default('threads', 1)
-  .alias('threads', 't')
-  .describe('reporter', 'select a reporter to use (simple or json)')
-  .nargs('reporter', 1)
-  .alias('reporter', 'r')
-  .default('reporter', 'simple')
-  .help('help')
-  .alias('help', 'h')
-  .describe('timeout', 'test timeout (in ms, default 10000)')
-  .nargs('timeout', 1)
-  .example('test262-harness path/to/test.js')
+'use strict';
+const Rx = require('rx');
+const eshost = require('eshost');
 
-exports.argv = yargv.argv;
+module.exports = makePool;
+function makePool(agentCount, hostType, hostArgs, hostPath, options = {}) {
+  const pool = new Rx.Subject();
+  const agents = [];
+
+  for (var i = 0; i < agentCount; i++) {
+    eshost.createAgent(hostType, {
+      hostArguments: hostArgs,
+      hostPath: hostPath
+    })
+    .then(agent => {
+      agents.push(agent);
+      pool.onNext(agent);
+    })
+    .catch(e => {
+      console.error('Error creating agent: ');
+      console.error(e);
+      process.exit(1);
+    });
+  }
+
+  pool.runTest = function (record) {
+    const agent = record[0];
+    const test = record[1];
+    const result = agent.evalScript(test.contents, { async: true });
+    let stopPromise;
+    const timeout = setTimeout(() => {
+      stopPromise = agent.stop();
+    }, options.timeout);
+
+    return result
+      .then(result => {
+        clearTimeout(timeout);
+        pool.onNext(agent);
+        test.rawResult = result;
+
+        if (stopPromise) {
+          test.rawResult.timeout = true;
+          // wait for the host to stop, then return the test
+          return stopPromise.then(() => test);
+        }
+
+        const doneError = result.stdout.match(/^test262\/error (.*)$/gm); 
+        if (doneError) {
+          const lastErrorString = doneError[doneError.length - 1];
+          const errorMatch = lastErrorString.match(/test262\/error ([^:]+): (.*)/);
+          test.rawResult.error = {
+            name: errorMatch[1],
+            message: errorMatch[2]
+          }
+        } 
+        return test;
+      })
+      .catch(err => {
+        console.error('Error running test: ', err);
+        process.exit(1);
+      });
+  }
+
+  pool.destroy = function () {
+    agents.forEach(agent => agent.destroy());
+  }
+
+  return pool
+}

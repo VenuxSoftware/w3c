@@ -4,9 +4,10 @@
 */
 
 /*---
-description: Should not test in strict mode
-flags: [noStrict]
+description: Fails by calling $ERROR
 expected:
-  pass: true
+  pass: false
+  message: failure message
 ---*/
-x = 5;
+
+$ERROR('failure message');

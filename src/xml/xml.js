@@ -3,15 +3,28 @@
   Process: API generation
 */
 
-/*---
-description: Fails by throwing an error
-expected:
-  pass: false
-  message: "Expected no error, got Error: failure message"
----*/
+'use strict';
 
-function foo() {
-    throw new Error('failure message');
+function jsonReporter(results) {
+  let started = false;
+
+  results.on('start', function () {
+    console.log('[');
+  });
+
+  results.on('end', function () { 
+    console.log(']');
+  });
+
+  results.on('test end', function (test) {
+    if (started) {
+      process.stdout.write(',');
+    } else {
+      started = true;
+    }
+
+    console.log(JSON.stringify(test));
+  });
 }
 
-foo();
+module.exports = jsonReporter;
