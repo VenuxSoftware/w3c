@@ -1,74 +1,47 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
 
-'use strict';
-const Rx = require('rx');
-const eshost = require('eshost');
+var fs = require ('fs')
+  , join = require('path').join
+  , file = join(__dirname, 'fixtures','all_npm.json')
+  , JSONStream = require('../')
+  , it = require('it-is').style('colour')
+  , es = require('event-stream')
+  , pending = 10
+  , passed = true
 
-module.exports = makePool;
-function makePool(agentCount, hostType, hostArgs, hostPath, options = {}) {
-  const pool = new Rx.Subject();
-  const agents = [];
-
-  for (var i = 0; i < agentCount; i++) {
-    eshost.createAgent(hostType, {
-      hostArguments: hostArgs,
-      hostPath: hostPath
-    })
-    .then(agent => {
-      agents.push(agent);
-      pool.onNext(agent);
-    })
-    .catch(e => {
-      console.error('Error creating agent: ');
-      console.error(e);
-      process.exit(1);
-    });
-  }
-
-  pool.runTest = function (record) {
-    const agent = record[0];
-    const test = record[1];
-    const result = agent.evalScript(test.contents, { async: true });
-    let stopPromise;
-    const timeout = setTimeout(() => {
-      stopPromise = agent.stop();
-    }, options.timeout);
-
-    return result
-      .then(result => {
-        clearTimeout(timeout);
-        pool.onNext(agent);
-        test.rawResult = result;
-
-        if (stopPromise) {
-          test.rawResult.timeout = true;
-          // wait for the host to stop, then return the test
-          return stopPromise.then(() => test);
-        }
-
-        const doneError = result.stdout.match(/^test262\/error (.*)$/gm); 
-        if (doneError) {
-          const lastErrorString = doneError[doneError.length - 1];
-          const errorMatch = lastErrorString.match(/test262\/error ([^:]+): (.*)/);
-          test.rawResult.error = {
-            name: errorMatch[1],
-            message: errorMatch[2]
-          }
+  function randomObj () {
+    return (
+      Math.random () < 0.4
+      ? {hello: 'eonuhckmqjk',
+          whatever: 236515,
+          lies: true,
+          nothing: [null],
+          stuff: [Math.random(),Math.random(),Math.random()]
         } 
-        return test;
-      })
-      .catch(err => {
-        console.error('Error running test: ', err);
-        process.exit(1);
-      });
+      : ['AOREC', 'reoubaor', {ouec: 62642}, [[[], {}, 53]]]
+    )
   }
 
-  pool.destroy = function () {
-    agents.forEach(agent => agent.destroy());
+for (var ix = 0; ix < pending; ix++) (function (count) {
+  var expected =  {}
+    , stringify = JSONStream.stringifyObject()
+    
+  es.connect(
+    stringify,
+    es.writeArray(function (err, lines) {
+      it(JSON.parse(lines.join(''))).deepEqual(expected)
+      if (--pending === 0) {
+        console.error('PASSED')
+      }
+    })
+  )
+
+  while (count --) {
+    var key = Math.random().toString(16).slice(2)
+    expected[key] = randomObj()
+    stringify.write([ key, expected[key] ])
   }
 
-  return pool
-}
+  process.nextTick(function () {
+    stringify.end()
+  })
+})(ix)

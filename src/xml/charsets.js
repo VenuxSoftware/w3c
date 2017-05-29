@@ -1,13 +1,25 @@
+
+
 /*
-  Status: prototype
-  Process: API generation
+ sometimes jsonparse changes numbers slightly.
 */
 
-/*---
-description: Fails by calling $ERROR
-expected:
-  pass: false
-  message: failure message
----*/
+var r = Math.random()
+  , Parser = require('jsonparse')
+  , p = new Parser()
+  , assert = require('assert')  
+  , times = 20
+while (times --) {
 
-$ERROR('failure message');
+  assert.equal(JSON.parse(JSON.stringify(r)), r, 'core JSON')
+
+  p.onValue = function (v) {
+    console.error('parsed', v)
+    assert.equal(v,r)
+  }
+  console.error('correct', r)
+  p.write (new Buffer(JSON.stringify([r])))
+
+
+
+}

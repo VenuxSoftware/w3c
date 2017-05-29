@@ -1,26 +1,29 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
 
-// Copyright 2009 the Sputnik authors.  All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
 
-function ToInteger(p) {
-  x = Number(p);
+var fs = require ('fs')
+  , join = require('path').join
+  , file = join(__dirname, '..','package.json')
+  , JSONStream = require('../')
+  , it = require('it-is')
 
-  if(isNaN(x)){
-    return +0;
-  }
+var expected = JSON.parse(fs.readFileSync(file))
+  , parser = JSONStream.parse([])
+  , called = 0
+  , ended = false
+  , parsed = []
+
+fs.createReadStream(file).pipe(parser)
   
-  if((x === +0) 
-  || (x === -0) 
-  || (x === Number.POSITIVE_INFINITY) 
-  || (x === Number.NEGATIVE_INFINITY)){
-     return x;
-  }
+parser.on('data', function (data) {
+  called ++
+  it(data).deepEqual(expected)
+})
 
-  var sign = ( x < 0 ) ? -1 : 1;
+parser.on('end', function () {
+  ended = true
+})
 
-  return (sign*Math.floor(Math.abs(x)));
-}
+process.on('exit', function () {
+  it(called).equal(1)
+  console.error('PASSED')
+})

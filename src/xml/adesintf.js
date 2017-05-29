@@ -1,56 +1,28 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
+var JSONStream = require('../')
 
-'use strict';
+var data = [
+  {ID: 1, optional: null},
+  {ID: 2, optional: null},
+  {ID: 3, optional: 20},
+  {ID: 4, optional: null},
+  {ID: 5, optional: 'hello'},
+  {ID: 6, optional: null}
+]
 
-const fs = require('fs');
-const Path = require('path');
 
-module.exports = findTest262Dir;
-function findTest262Dir(globber) {
-  const set = globber.minimatch.set;
-  let baseDir;
-  for (let i = 0; i < set.length; i++) {
-    let base = [];
+var test = require('tape')
 
-    for (let j = 0; j < set[i].length; j++) {
-      if (typeof set[i][j] !== 'string') {
-        break;
-      }
+test ('null properties', function (t) {
+  var actual = []
+  var stream = 
 
-      base.push(set[i][j]);
-    }
+  JSONStream.parse('*.optional')
+    .on('data', function (v) { actual.push(v) })
+    .on('end', function () {
+      t.deepEqual(actual, [20, 'hello'])
+      t.end()
+    })
 
-    baseDir = findTest262Root(base.join("/"));
-
-    if (baseDir) {
-      break;
-    }
-  }
-
-  return baseDir;
-}
-
-function findTest262Root(path) {
-  const stat = fs.statSync(path);
-  if (stat.isFile()) {
-    path = Path.dirname(path);
-  }
-
-  const contents = fs.readdirSync(path)
-  if (contents.indexOf('README.md') > -1
-      && contents.indexOf('test') > -1
-      && contents.indexOf('harness') > -1) {
-    return path;
-  }
-
-  const parent = Path.resolve(path, '../');
-
-  if (parent === path) {
-    return null;
-  }
-
-  return findTest262Root(parent);
-}
+  stream.write(JSON.stringify(data, null, 2))
+  stream.end()
+})

@@ -1,13 +1,5 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
+var lockFile = require('../../lockfile.js')
 
-/*---
-description: Fails by calling $ERROR
-expected:
-  pass: false
-  message: failure message
----*/
+lockFile.lockSync('never-forget')
 
-$ERROR('failure message');
+throw new Error('waaaaaaaaa')

@@ -1,22 +1,19 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
+"use strict"
 
-/*---
-description: Should not test in strict mode
-flags: [raw]
-expected:
-  pass: true
----*/
-'use strict';
-var seemsStrict;
-try {
-  x = 1;
-} catch (err) {
-  seemsStrict = err.constructor === ReferenceError;
+function addLazyProperty(object, name, initializer, enumerable) {
+  Object.defineProperty(object, name, {
+    get: function() {
+      var v = initializer.call(this)
+      Object.defineProperty(this, name, { value: v, enumerable: !!enumerable, writable: true })
+      return v
+    },
+    set: function(v) {
+      Object.defineProperty(this, name, { value: v, enumerable: !!enumerable, writable: true })
+      return v
+    },
+    enumerable: !!enumerable,
+    configurable: true
+  })
 }
 
-if (!seemsStrict) {
-  throw new Error('Script erroneously not interpreted in strict mode.');
-}
+module.exports = addLazyProperty
