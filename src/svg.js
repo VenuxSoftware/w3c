@@ -1,22 +1,29 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
+ var fs = require ('fs')
+   , join = require('path').join
+   , file = join(__dirname, 'fixtures','depth.json')
+   , JSONStream = require('../')
+   , it = require('it-is')
 
-/*---
-description: Should not test in strict mode
-flags: [raw]
-expected:
-  pass: true
----*/
-'use strict';
-var seemsStrict;
-try {
-  x = 1;
-} catch (err) {
-  seemsStrict = err.constructor === ReferenceError;
-}
+ var expected = JSON.parse(fs.readFileSync(file))
+   , parser = JSONStream.parse(['docs', {recurse: true}, 'value'])
+   , called = 0
+   , ended = false
+   , parsed = []
 
-if (!seemsStrict) {
-  throw new Error('Script erroneously not interpreted in strict mode.');
-}
+ fs.createReadStream(file).pipe(parser)
+  
+ parser.on('data', function (data) {
+   called ++
+   parsed.push(data)
+ })
+
+ parser.on('end', function () {
+   ended = true
+ })
+
+ process.on('exit', function () {
+   it(called).equal(5)
+   for (var i = 0 ; i < 5 ; i++)
+     it(parsed[i]).deepEqual(i)
+   console.error('PASSED')
+ })

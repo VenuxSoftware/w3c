@@ -1,27 +1,39 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
 
-//setTimeout is not available, hence this script was loaded
-if(Promise === undefined && this.setTimeout === undefined){
-    if(/\$DONE()/.test(code))
-        $ERROR("Async test capability is not supported in your test environment");
+
+var fs = require ('fs')
+  , join = require('path').join
+  , file = join(__dirname, 'fixtures','all_npm.json')
+  , JSONStream = require('../')
+  , it = require('it-is')
+
+function fn (s) {
+  return !isNaN(parseInt(s, 10))
 }
 
-if(Promise !== undefined && this.setTimeout === undefined) 
-    (function(that){
-       that.setTimeout = function(callback, delay) {
-            var p = Promise.resolve();
-            var start = Date.now();
-            var end = start + delay;
-            function check(){
-                var timeLeft = end - Date.now();        
-                if(timeLeft > 0)
-                    p.then(check);
-                else
-                    callback();
-            }        
-            p.then(check);
-        }
-    })(this);
+var expected = JSON.parse(fs.readFileSync(file))
+  , parser = JSONStream.parse(['rows', fn])
+  , called = 0
+  , ended = false
+  , parsed = []
+
+fs.createReadStream(file).pipe(parser)
+  
+parser.on('data', function (data) {
+  called ++
+  it.has({
+    id: it.typeof('string'),
+    value: {rev: it.typeof('string')},
+    key:it.typeof('string')
+  })
+  parsed.push(data)
+})
+
+parser.on('end', function () {
+  ended = true
+})
+
+process.on('exit', function () {
+  it(called).equal(expected.rows.length)
+  it(parsed).deepEqual(expected.rows)
+  console.error('PASSED')
+})
