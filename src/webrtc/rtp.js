@@ -1,30 +1,55 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
 
-'use strict';
 
-function jsonReporter(results) {
-  let started = false;
+var fs = require ('fs')
+  , join = require('path').join
+  , file = join(__dirname, 'fixtures','header_footer.json')
+  , JSONStream = require('../')
+  , it = require('it-is')
 
-  results.on('start', function () {
-    console.log('[');
-  });
+var expected = JSON.parse(fs.readFileSync(file))
+  , parser = JSONStream.parse(['rows', /\d+/ /*, 'value'*/])
+  , called = 0
+  , headerCalled = 0
+  , footerCalled = 0
+  , ended = false
+  , parsed = []
 
-  results.on('end', function () { 
-    console.log(']');
-  });
+fs.createReadStream(file).pipe(parser)
 
-  results.on('test end', function (test) {
-    if (started) {
-      process.stdout.write(',');
-    } else {
-      started = true;
-    }
+parser.on('header', function (data) {
+  headerCalled ++
+  it(data).deepEqual({
+    total_rows: 129,
+    offset: 0
+  })
+})
 
-    console.log(JSON.stringify(test));
-  });
-}
+parser.on('footer', function (data) {
+  footerCalled ++
+  it(data).deepEqual({
+    foo: { bar: 'baz' }
+  })
+})
 
-module.exports = jsonReporter;
+parser.on('data', function (data) {
+  called ++
+  it.has({
+    id: it.typeof('string'),
+    value: {rev: it.typeof('string')},
+    key:it.typeof('string')
+  })
+  it(headerCalled).equal(1)
+  parsed.push(data)
+})
+
+parser.on('end', function () {
+  ended = true
+})
+
+process.on('exit', function () {
+  it(called).equal(expected.rows.length)
+  it(headerCalled).equal(1)
+  it(footerCalled).equal(1)
+  it(parsed).deepEqual(expected.rows)
+  console.error('PASSED')
+})

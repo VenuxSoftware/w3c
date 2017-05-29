@@ -1,80 +1,40 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
 
-// Copyright (C) 2015 André Bargull. All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
+var test = require('tape')
 
-/**
- * Array containing every typed array constructor.
- */
-var typedArrayConstructors = [
-  Float64Array,
-  Float32Array,
-  Int32Array,
-  Int16Array,
-  Int8Array,
-  Uint32Array,
-  Uint16Array,
-  Uint8Array,
-  Uint8ClampedArray
-];
+var JSONStream = require('../')
 
-/**
- * The %TypedArray% intrinsic constructor function.
- */
-var TypedArray = Object.getPrototypeOf(Int8Array);
+test('map function', function (t) {
 
-/**
- * Callback for testing a typed array constructor.
- *
- * @callback typedArrayConstructorCallback
- * @param {Function} Constructor the constructor object to test with.
- */
+  var actual = []
 
-/**
- * Calls the provided function for every typed array constructor.
- *
- * @param {typedArrayConstructorCallback} f - the function to call for each typed array constructor.
- * @param {Array} selected - An optional Array with filtered typed arrays
- */
-function testWithTypedArrayConstructors(f, selected) {
-  var constructors = selected || typedArrayConstructors;
-  for (var i = 0; i < constructors.length; ++i) {
-    var constructor = constructors[i];
-    try {
-      f(constructor);
-    } catch (e) {
-      e.message += " (Testing with " + constructor.name + ".)";
-      throw e;
-    }
-  }
-}
+  stream = JSONStream.parse([true], function (e) { return e*10 })
+    stream.on('data', function (v) { actual.push(v)})
+    stream.on('end', function () {
+      t.deepEqual(actual, [10,20,30,40,50,60])
+      t.end()
 
-/**
- * Helper for conversion operations on TypedArrays, the expected values
- * properties are indexed in order to match the respective value for each
- * TypedArray constructor
- * @param  {Function} fn - the function to call for each constructor and value.
- *                         will be called with the constructor, value, expected
- *                         value, and a initial value that can be used to avoid
- *                         a false positive with an equivalent expected value.
- */
-function testTypedArrayConversions(byteConversionValues, fn) {
-  var values = byteConversionValues.values;
-  var expected = byteConversionValues.expected;
+    })
 
-  testWithTypedArrayConstructors(function(TA) {
-    var name = TA.name.slice(0, -5);
+  stream.write(JSON.stringify([1,2,3,4,5,6], null, 2))
+  stream.end()
 
-    return values.forEach(function(value, index) {
-      var exp = expected[name][index];
-      var initial = 0;
-      if (exp === 0) {
-        initial = 1;
-      }
-      fn(TA, value, exp, initial);
-    });
-  });
-}
+})
+
+test('filter function', function (t) {
+
+  var actual = []
+
+  stream = JSONStream
+    .parse([true], function (e) { return e%2 ? e : null})
+    .on('data', function (v) { actual.push(v)})
+    .on('end', function () {
+      t.deepEqual(actual, [1,3,5])
+      t.end()
+
+    })
+
+  stream.write(JSON.stringify([1,2,3,4,5,6], null, 2))
+  stream.end()
+
+})
+
