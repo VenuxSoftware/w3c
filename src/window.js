@@ -1,26 +1,36 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
+var fs = require ('fs');
+var net = require('net');
+var join = require('path').join;
+var file = join(__dirname, 'fixtures','all_npm.json');
+var it = require('it-is');
+var JSONStream = require('../');
 
-// Copyright (C) 2015 the V8 project authors. All rights reserved.
-// This code is governed by the BSD license found in the LICENSE file.
-/**
- * Verify that the given date object's Number representation describes the
- * correct number of milliseconds since the Unix epoch relative to the local
- * time zone (as interpreted at the specified date).
- *
- * @param {Date} date
- * @param {Number} expectedMs
- */
-function assertRelativeDateMs(date, expectedMs) {
-  var actualMs = date.valueOf();
-  var localOffset = date.getTimezoneOffset() * 60000;
+var str = fs.readFileSync(file);
 
-  if (actualMs - localOffset !== expectedMs) {
-    $ERROR(
-      'Expected ' + date + ' to be ' + expectedMs +
-      ' milliseconds from the Unix epoch'
-    );
-  }
-}
+var datas = {}
+
+var server = net.createServer(function(client) {
+    var data_calls = 0;
+    var parser = JSONStream.parse(['rows', true, 'key']);
+    parser.on('data', function(data) {
+        ++ data_calls;
+        datas[data] = (datas[data] || 0) + 1
+        it(data).typeof('string')
+    });
+
+    parser.on('end', function() {
+        console.log('END')
+        var min = Infinity
+        for (var d in datas)
+          min = min > datas[d] ? datas[d] : min
+        it(min).equal(3);
+        server.close();
+    });
+    client.pipe(parser);
+});
+server.listen(9999);
+
+var client = net.connect({ port : 9999 }, function() {
+    var msgs = str + ' ' + str + '\n\n' + str
+    client.end(msgs);
+});

@@ -1,30 +1,29 @@
-/*
-  Status: prototype
-  Process: API generation
-*/
+var fs = require ('fs')
+  , join = require('path').join
+  , file = join(__dirname, 'fixtures','all_npm.json')
+  , JSONStream = require('../')
+  , it = require('it-is')
 
-'use strict';
+var expected = JSON.parse(fs.readFileSync(file))
+  , parser = JSONStream.parse('rows..rev')
+  , called = 0
+  , ended = false
+  , parsed = []
 
-function jsonReporter(results) {
-  let started = false;
+fs.createReadStream(file).pipe(parser)
+  
+parser.on('data', function (data) {
+  called ++
+  parsed.push(data)
+})
 
-  results.on('start', function () {
-    console.log('[');
-  });
+parser.on('end', function () {
+  ended = true
+})
 
-  results.on('end', function () { 
-    console.log(']');
-  });
-
-  results.on('test end', function (test) {
-    if (started) {
-      process.stdout.write(',');
-    } else {
-      started = true;
-    }
-
-    console.log(JSON.stringify(test));
-  });
-}
-
-module.exports = jsonReporter;
+process.on('exit', function () {
+  it(called).equal(expected.rows.length)
+  for (var i = 0 ; i < expected.rows.length ; i++)
+    it(parsed[i]).deepEqual(expected.rows[i].value.rev)
+  console.error('PASSED')
+})
