@@ -1,18 +1,55 @@
-# Handle line endings automatically for files detected as
-# text and leave all files detected as binary untouched.
+﻿# Handle line endings automatically for files detected as text
+# and leave all files detected as binary untouched.
 * text=auto
 
-# The above will handle all files NOT found below
-#
 # These files are text and should be normalized (Convert crlf => lf)
+*.asm           text
+*.c             text
+*.c++           text
+*.cc            text
+*.cp            text
+*.cpp           text
+*.cs            text
 *.css           text
+*.cxx           text
+*.ebnf          text
+*.go            text
+*.h             text
+*.h++           text
+*.hh            text
+*.hp            text
+*.hpp           text
 *.htm           text
 *.html          text
+*.hxx           text
+*.i             text
+*.ii            text
+*.inc           text
+*.java          text
 *.js            text
 *.json          text
+*.λ             text
+*.lua           text
+*.m             text
+*.mi            text
+*.mii           text
+*.mm            text
+*.pas           text
+*.php           text
+*.py            text
+*.rc            text
+*.S             text
 *.sh            text
+*.swift         text
+*.sx            text
+*.tcc           text
+*.ts            text
 *.txt           text
-*.xml           text
+*.vb            text
+*.vcp           text
+*.vcpp          text
+*.vls           text
+*.vpp           text
 
 # These files are binary and should be left untouched
 # (binary is a macro for -text -diff)
@@ -24,12 +61,6 @@
 *.png           binary
 *.so            binary
 *.zip           binary
-*.bmp           binary
-*.dds           binary
-*.hdr           binary
-*.mng           binary
-*.pcx           binary
-*.psd           binary
-*.tiff          binary
-*.tif           binary
-*.xpm           binary
+*.res           binary
+*.xml           binary
+*.o             binary

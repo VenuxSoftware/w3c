@@ -1,15 +1,77 @@
-# Temporary ignores
-___*.md
-semantics/
-intl/
+﻿# Temporary ignores
+___*.*
+asm/
 assets/
+c#/
+c++/
+c11/
+go/
+intl/
+java/
+lua/
+pas/
+php/
+py/
+semantics/
+sql/
+swift/
+ts/
+vb/
 package.json
+
+# Experimental other languages
+*.asm   # Assembler source file
+*.c     # C source code which must be preprocessed
+*.C     # C++ source code which must be preprocessed
+*.c++   # C++ source code which must be preprocessed
+*.cc    # C++ source code which must be preprocessed
+*.cp    # C++ source code which must be preprocessed
+*.cpp   # C++ source code which must be preprocessed
+*.cs    # C# source file
+*.cxx   # C++ source code which must be preprocessed
+*.ebnf  # Extended Backus–Naur form
+*.go    # Go source
+*.H     # C++ header file to be turned into a precompiled header
+*.h     # C, C++, Objective-C or Objective-C++ header file to be turned into a precompiled header
+*.h++   # C++ header file to be turned into a precompiled header
+*.hh    # C++ header file to be turned into a precompiled header
+*.hp    # C++ header file to be turned into a precompiled header
+*.hpp   # C++ header file to be turned into a precompiled header
+*.hxx   # C++ header file to be turned into a precompiled header
+*.i     # C source code which should not be preprocessed
+*.ii    # C++ source code which should not be preprocessed
+*.inc   # Include file
+*.java  # Java source file
+*.λ     # Lambda meta-language
+*.lua   # Lua language
+*.m     # Objective-C source code
+*.M     # Objective-C++ source code
+*.M     # Objective-C++ source code which must be preprocessed
+*.mi    # Objective-C source code which should not be preprocessed
+*.mii   # Objective-C++ source code which should not be preprocessed
+*.mm    # Objective-C++ source code which must be preprocessed
+*.pas   # Pascal language file
+*.php   # Hypertext Preprocessor source file
+*.py    # Python source file
+*.rc    # Resource source file
+*.res   # Resource
+*.S     # Assembler source file
+*.swift # Swift source
+*.sx    # Assembler code which must be preprocessed
+*.tcc   # C++ header file to be turned into a precompiled header
+*.ts    # TypeScript source
+*.vb    # Visual Basic .NET
+*.vcp   # Venux C program
+*.vcpp  # Venux C++ program
+*.vls   # Venux lenguage specification
+*.vpp   # Venux pascal program
 
 # Shared objects
 *.dll
 *.so
 *.so.*
 *.dylib
+*.o
 
 # Executables
 *.exe
