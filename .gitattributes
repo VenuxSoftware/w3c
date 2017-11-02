@@ -54,14 +54,32 @@
 # These files are binary and should be left untouched
 # (binary is a macro for -text -diff)
 *.dll           binary
-*.gif           binary
-*.ico           binary
-*.jpg           binary
-*.jpeg          binary
-*.png           binary
 *.so            binary
 *.zip           binary
 *.res           binary
 *.xml           binary
 *.o             binary
 *.tdf           binary
+*.doc           binary
+*.docx          binary
+*.pdf           binary
+*.bmp           binary
+*.cif           binary
+*.dds           binary
+*.gif           binary
+*.hdr           binary
+*.img           binary
+*.jng           binary
+*.jp2           binary
+*.jpg           binary
+*.mng           binary
+*.pam           binary
+*.pcx           binary
+*.pfm           binary
+*.pgm           binary
+*.png           binary
+*.ppm           binary
+*.psd           binary
+*.tga           binary
+*.tif           binary
+*.xpm           binary
