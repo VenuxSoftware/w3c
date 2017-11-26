@@ -312,6 +312,33 @@ ts.*.g4
 vbn.g4
 vbn.*.g4
 
+# Images
+*.bmp
+*.cif
+*.dds
+*.gif
+*.hdr
+*.img
+*.jng
+*.jp2
+*.jpg
+*.mng
+*.pam
+*.pcx
+*.pfm
+*.pgm
+*.png
+*.ppm
+*.psd
+*.tga
+*.tif
+*.xpm
+
+# Audio
+*.wav
+*.mp3
+*.mp4
+
 # Shared objects
 *.dll
 *.so

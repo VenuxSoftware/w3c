@@ -83,3 +83,6 @@
 *.tga           binary
 *.tif           binary
 *.xpm           binary
+*.wav           binary
+*.mp3           binary
+*.mp4           binary
