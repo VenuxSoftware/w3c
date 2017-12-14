@@ -1,1 +1,1 @@
-License style is being decided and will appear as codebase matures. This file is required for run-time environment.
+We are currently working on a license.
