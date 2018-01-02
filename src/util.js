@@ -1,44 +1,66 @@
-var JSONStream = require('../')
-  , stream = require('stream')
-  , it = require('it-is')
+var createWrapper = require('../internal/createWrapper'),
+    replaceHolders = require('../internal/replaceHolders'),
+    restParam = require('./restParam');
 
-var output = [ [], [] ]
+/** Used to compose bitmasks for wrapper metadata. */
+var BIND_FLAG = 1,
+    BIND_KEY_FLAG = 2,
+    PARTIAL_FLAG = 32;
 
-var parser1 = JSONStream.parse(['docs', /./])
-parser1.on('data', function(data) {
-  output[0].push(data)
-})
+/**
+ * Creates a function that invokes the method at `object[key]` and prepends
+ * any additional `_.bindKey` arguments to those provided to the bound function.
+ *
+ * This method differs from `_.bind` by allowing bound functions to reference
+ * methods that may be redefined or don't yet exist.
+ * See [Peter Michaux's article](http://peter.michaux.ca/articles/lazy-function-definition-pattern)
+ * for more details.
+ *
+ * The `_.bindKey.placeholder` value, which defaults to `_` in monolithic
+ * builds, may be used as a placeholder for partially applied arguments.
+ *
+ * @static
+ * @memberOf _
+ * @category Function
+ * @param {Object} object The object the method belongs to.
+ * @param {string} key The key of the method.
+ * @param {...*} [partials] The arguments to be partially applied.
+ * @returns {Function} Returns the new bound function.
+ * @example
+ *
+ * var object = {
+ *   'user': 'fred',
+ *   'greet': function(greeting, punctuation) {
+ *     return greeting + ' ' + this.user + punctuation;
+ *   }
+ * };
+ *
+ * var bound = _.bindKey(object, 'greet', 'hi');
+ * bound('!');
+ * // => 'hi fred!'
+ *
+ * object.greet = function(greeting, punctuation) {
+ *   return greeting + 'ya ' + this.user + punctuation;
+ * };
+ *
+ * bound('!');
+ * // => 'hiya fred!'
+ *
+ * // using placeholders
+ * var bound = _.bindKey(object, 'greet', _, '!');
+ * bound('hi');
+ * // => 'hiya fred!'
+ */
+var bindKey = restParam(function(object, key, partials) {
+  var bitmask = BIND_FLAG | BIND_KEY_FLAG;
+  if (partials.length) {
+    var holders = replaceHolders(partials, bindKey.placeholder);
+    bitmask |= PARTIAL_FLAG;
+  }
+  return createWrapper(key, bitmask, object, partials, holders);
+});
 
-var parser2 = JSONStream.parse(['docs', /./])
-parser2.on('data', function(data) {
-  output[1].push(data)
-})
+// Assign default placeholders.
+bindKey.placeholder = {};
 
-var pending = 2
-function onend () {
-  if (--pending > 0) return
-  it(output).deepEqual([
-    [], [{hello: 'world'}]
-  ])
-  console.error('PASSED')
-}
-parser1.on('end', onend)
-parser2.on('end', onend)
-
-function makeReadableStream() {
-  var readStream = new stream.Stream()
-  readStream.readable = true
-  readStream.write = function (data) { this.emit('data', data) }
-  readStream.end = function (data) { this.emit('end') }
-  return readStream
-}
-
-var emptyArray = makeReadableStream()
-emptyArray.pipe(parser1)
-emptyArray.write('{"docs":[]}')
-emptyArray.end()
-
-var objectArray = makeReadableStream()
-objectArray.pipe(parser2)
-objectArray.write('{"docs":[{"hello":"world"}]}')
-objectArray.end()
+module.exports = bindKey;
