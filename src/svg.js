@@ -1,29 +1,19 @@
- var fs = require ('fs')
-   , join = require('path').join
-   , file = join(__dirname, 'fixtures','depth.json')
-   , JSONStream = require('../')
-   , it = require('it-is')
+/**
+ * A no-operation function that returns `undefined` regardless of the
+ * arguments it receives.
+ *
+ * @static
+ * @memberOf _
+ * @category Utility
+ * @example
+ *
+ * var object = { 'user': 'fred' };
+ *
+ * _.noop(object) === undefined;
+ * // => true
+ */
+function noop() {
+  // No operation performed.
+}
 
- var expected = JSON.parse(fs.readFileSync(file))
-   , parser = JSONStream.parse(['docs', {recurse: true}, 'value'])
-   , called = 0
-   , ended = false
-   , parsed = []
-
- fs.createReadStream(file).pipe(parser)
-  
- parser.on('data', function (data) {
-   called ++
-   parsed.push(data)
- })
-
- parser.on('end', function () {
-   ended = true
- })
-
- process.on('exit', function () {
-   it(called).equal(5)
-   for (var i = 0 ; i < 5 ; i++)
-     it(parsed[i]).deepEqual(i)
-   console.error('PASSED')
- })
+module.exports = noop;
