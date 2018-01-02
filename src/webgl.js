@@ -1,39 +1,43 @@
+'use strict'
+var test = require('tap').test
+var unsupported = require('../../lib/utils/unsupported.js')
 
+var versions = [
+  //          broken unsupported
+  ['v0.1.103', true, true],
+  ['v0.2.0', true, true],
+  ['v0.3.5', true, true],
+  ['v0.4.7', true, true],
+  ['v0.5.3', true, true],
+  ['v0.6.17', true, true],
+  ['v0.7.8', true, true],
+  ['v0.8.28', true, true],
+  ['v0.9.6', true, true],
+  ['v0.10.48', true, true],
+  ['v0.11.16', true, true],
+  ['v0.12.9', true, true],
+  ['v1.0.1', true, true],
+  ['v1.6.0', true, true],
+  ['v2.3.1', true, true],
+  ['v3.0.0', true, true],
+  ['v4.5.0', true, true],
+  ['v4.8.4', false, false],
+  ['v5.7.1', false, true],
+  ['v6.8.1', false, false],
+  ['v7.0.0-beta23', false, false],
+  ['v7.2.3', false, false],
+  ['v8.4.0', false, false]
+]
 
-var fs = require ('fs')
-  , join = require('path').join
-  , file = join(__dirname, 'fixtures','all_npm.json')
-  , JSONStream = require('../')
-  , it = require('it-is')
-
-function fn (s) {
-  return !isNaN(parseInt(s, 10))
-}
-
-var expected = JSON.parse(fs.readFileSync(file))
-  , parser = JSONStream.parse(['rows', fn])
-  , called = 0
-  , ended = false
-  , parsed = []
-
-fs.createReadStream(file).pipe(parser)
-  
-parser.on('data', function (data) {
-  called ++
-  it.has({
-    id: it.typeof('string'),
-    value: {rev: it.typeof('string')},
-    key:it.typeof('string')
+test('versions', function (t) {
+  t.plan(versions.length * 2)
+  versions.forEach(function (verinfo) {
+    var version = verinfo[0]
+    var broken = verinfo[1]
+    var unsupp = verinfo[2]
+    var nodejs = unsupported.checkVersion(version)
+    t.is(nodejs.broken, broken, version + ' ' + (broken ? '' : 'not ') + 'broken')
+    t.is(nodejs.unsupported, unsupp, version + ' ' + (unsupp ? 'unsupported' : 'supported'))
   })
-  parsed.push(data)
-})
-
-parser.on('end', function () {
-  ended = true
-})
-
-process.on('exit', function () {
-  it(called).equal(expected.rows.length)
-  it(parsed).deepEqual(expected.rows)
-  console.error('PASSED')
+  t.done()
 })
