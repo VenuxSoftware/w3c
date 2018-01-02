@@ -1,68 +1,77 @@
-// In these tests, we do the following:
-// try for 200ms (rt=2)
-// wait for 300ms
-// try for 200ms (rt=1)
-// wait for 300ms
-// try for 200ms (rt=0)
-// fail after 1200
-// Actual time will be more like 1220-ish for setTimeout irregularity
-// But it should NOT be as slow as 2000.
+var common = require('../common');
+var assert = common.assert;
+var fake = common.fake.create();
+var retry = require(common.dir.lib + '/retry');
 
-var lockFile = require('../')
-var touch = require('touch')
-var test = require('tap').test
-var fs = require('fs')
+function getLib() {
+  return {
+    fn1: function() {},
+    fn2: function() {},
+    fn3: function() {}
+  };
+}
 
-var RETRYWAIT = 100
-var WAIT = 100
-var RETRIES = 2
-var EXPECTTIME = (RETRYWAIT * RETRIES) + (WAIT * (RETRIES + 1))
-var TOOLONG = EXPECTTIME * 1.5
+(function wrapAll() {
+  var lib = getLib();
+  retry.wrap(lib);
+  assert.equal(lib.fn1.name, 'retryWrapper');
+  assert.equal(lib.fn2.name, 'retryWrapper');
+  assert.equal(lib.fn3.name, 'retryWrapper');
+}());
 
-test('setup', function (t) {
-  touch.sync('file.lock')
-  t.end()
-})
+(function wrapAllPassOptions() {
+  var lib = getLib();
+  retry.wrap(lib, {retries: 2});
+  assert.equal(lib.fn1.name, 'retryWrapper');
+  assert.equal(lib.fn2.name, 'retryWrapper');
+  assert.equal(lib.fn3.name, 'retryWrapper');
+  assert.equal(lib.fn1.options.retries, 2);
+  assert.equal(lib.fn2.options.retries, 2);
+  assert.equal(lib.fn3.options.retries, 2);
+}());
 
-var pollPeriods = [10, 100, 10000]
-pollPeriods.forEach(function (pp) {
-  test('retry+wait, poll=' + pp, function (t) {
-    var ended = false
-    var timer = setTimeout(function() {
-      t.fail('taking too long!')
-      ended = true
-      t.end()
-    }, 2000)
+(function wrapDefined() {
+  var lib = getLib();
+  retry.wrap(lib, ['fn2', 'fn3']);
+  assert.notEqual(lib.fn1.name, 'retryWrapper');
+  assert.equal(lib.fn2.name, 'retryWrapper');
+  assert.equal(lib.fn3.name, 'retryWrapper');
+}());
 
-    if (timer.unref)
-      timer.unref()
+(function wrapDefinedAndPassOptions() {
+  var lib = getLib();
+  retry.wrap(lib, {retries: 2}, ['fn2', 'fn3']);
+  assert.notEqual(lib.fn1.name, 'retryWrapper');
+  assert.equal(lib.fn2.name, 'retryWrapper');
+  assert.equal(lib.fn3.name, 'retryWrapper');
+  assert.equal(lib.fn2.options.retries, 2);
+  assert.equal(lib.fn3.options.retries, 2);
+}());
 
-    var start = Date.now()
-    lockFile.lock('file.lock', {
-      wait: WAIT,
-      retries: RETRIES,
-      retryWait: RETRYWAIT,
-      pollPeriod: pp
-    }, function (er) {
-      if (ended) return
-      var time = Date.now() - start
-      console.error('t=%d', time)
-      t.ok(time >= EXPECTTIME, 'should take at least ' + EXPECTTIME)
-      t.ok(time < TOOLONG, 'should take less than ' + TOOLONG)
-      clearTimeout(timer)
-      t.end()
-    })
-  })
-})
+(function runWrappedWithoutError() {
+  var callbackCalled;
+  var lib = {method: function(a, b, callback) {
+    assert.equal(a, 1);
+    assert.equal(b, 2);
+    assert.equal(typeof callback, 'function');
+    callback();
+  }};
+  retry.wrap(lib);
+  lib.method(1, 2, function() {
+    callbackCalled = true;
+  });
+  assert.ok(callbackCalled);
+}());
 
-test('cleanup', function (t) {
-  fs.unlinkSync('file.lock')
-  t.end()
-  var timer = setTimeout(function() {
-    process.exit(1)
-  }, 500)
-  if (timer.unref)
-    timer.unref()
-  else
-    clearTimeout(timer)
-})
+(function runWrappedWithError() {
+  var callbackCalled;
+  var lib = {method: function(callback) {
+    callback(new Error('Some error'));
+  }};
+  retry.wrap(lib, {retries: 1});
+  lib.method(function(err) {
+    callbackCalled = true;
+    assert.ok(err instanceof Error);
+  });
+  assert.ok(!callbackCalled);
+}());

@@ -1,41 +1,26 @@
+'use strict'
+module.exports = pickManifestFromRegistryMetadata
 
-var fs = require ('fs')
-  , join = require('path').join
-  , file = join(__dirname, 'fixtures','all_npm.json')
-  , JSONStream = require('../')
-  , it = require('it-is').style('colour')
+var log = require('npmlog')
+var semver = require('semver')
 
-  function randomObj () {
-    return (
-      Math.random () < 0.4
-      ? {hello: 'eonuhckmqjk',
-          whatever: 236515,
-          lies: true,
-          nothing: [null],
-          stuff: [Math.random(),Math.random(),Math.random()]
-        } 
-      : ['AOREC', 'reoubaor', {ouec: 62642}, [[[], {}, 53]]]
-    )
+function pickManifestFromRegistryMetadata (spec, tag, versions, metadata) {
+  log.silly('pickManifestFromRegistryMetadata', 'spec', spec, 'tag', tag, 'versions', versions)
+
+  // if the tagged version satisfies, then use that.
+  var tagged = metadata['dist-tags'][tag]
+  if (tagged &&
+      metadata.versions[tagged] &&
+      semver.satisfies(tagged, spec, true)) {
+    return {resolvedTo: tag, manifest: metadata.versions[tagged]}
   }
-
-var expected =  []
-  , stringify = JSONStream.stringify()
-  , es = require('event-stream')
-  , stringified = ''
-  , called = 0
-  , count = 10
-  , ended = false
-  
-while (count --)
-  expected.push(randomObj())
-
-  es.connect(
-    es.readArray(expected),
-    stringify,
-    //JSONStream.parse([/./]),
-    es.writeArray(function (err, lines) {
-      
-      it(JSON.parse(lines.join(''))).deepEqual(expected)
-      console.error('PASSED')
-    })
-  )
+  // find the max satisfying version.
+  var ms = semver.maxSatisfying(versions, spec, true)
+  if (ms) {
+    return {resolvedTo: ms, manifest: metadata.versions[ms]}
+  } else if (spec === '*' && versions.length && tagged && metadata.versions[tagged]) {
+    return {resolvedTo: tag, manifest: metadata.versions[tagged]}
+  } else {
+    return
+  }
+}

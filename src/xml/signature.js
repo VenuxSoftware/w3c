@@ -1,29 +1,38 @@
+var isObject = require('./isObject');
 
+/** `Object#toString` result references. */
+var funcTag = '[object Function]';
 
-var fs = require ('fs')
-  , join = require('path').join
-  , file = join(__dirname, '..','package.json')
-  , JSONStream = require('../')
-  , it = require('it-is')
+/** Used for native method references. */
+var objectProto = Object.prototype;
 
-var expected = JSON.parse(fs.readFileSync(file))
-  , parser = JSONStream.parse([])
-  , called = 0
-  , ended = false
-  , parsed = []
+/**
+ * Used to resolve the [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objToString = objectProto.toString;
 
-fs.createReadStream(file).pipe(parser)
-  
-parser.on('data', function (data) {
-  called ++
-  it(data).deepEqual(expected)
-})
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is correctly classified, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in older versions of Chrome and Safari which return 'function' for regexes
+  // and Safari 8 which returns 'object' for typed array constructors.
+  return isObject(value) && objToString.call(value) == funcTag;
+}
 
-parser.on('end', function () {
-  ended = true
-})
-
-process.on('exit', function () {
-  it(called).equal(1)
-  console.error('PASSED')
-})
+module.exports = isFunction;

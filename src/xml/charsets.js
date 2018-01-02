@@ -1,25 +1,32 @@
+var isError = require('../lang/isError'),
+    restParam = require('../function/restParam');
 
-
-/*
- sometimes jsonparse changes numbers slightly.
-*/
-
-var r = Math.random()
-  , Parser = require('jsonparse')
-  , p = new Parser()
-  , assert = require('assert')  
-  , times = 20
-while (times --) {
-
-  assert.equal(JSON.parse(JSON.stringify(r)), r, 'core JSON')
-
-  p.onValue = function (v) {
-    console.error('parsed', v)
-    assert.equal(v,r)
+/**
+ * Attempts to invoke `func`, returning either the result or the caught error
+ * object. Any additional arguments are provided to `func` when it's invoked.
+ *
+ * @static
+ * @memberOf _
+ * @category Utility
+ * @param {Function} func The function to attempt.
+ * @returns {*} Returns the `func` result or error object.
+ * @example
+ *
+ * // avoid throwing errors for invalid selectors
+ * var elements = _.attempt(function(selector) {
+ *   return document.querySelectorAll(selector);
+ * }, '>_>');
+ *
+ * if (_.isError(elements)) {
+ *   elements = [];
+ * }
+ */
+var attempt = restParam(function(func, args) {
+  try {
+    return func.apply(undefined, args);
+  } catch(e) {
+    return isError(e) ? e : new Error(e);
   }
-  console.error('correct', r)
-  p.write (new Buffer(JSON.stringify([r])))
+});
 
-
-
-}
+module.exports = attempt;
