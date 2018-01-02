@@ -1,34 +1,30 @@
-var JSONStream = require('../');
-var test = require('tape')
+var getLength = require('../internal/getLength'),
+    isLength = require('../internal/isLength'),
+    keys = require('../object/keys');
 
-test('#66', function (t) {
-   var error = 0;
-   var stream = JSONStream
-    .parse()
-    .on('error', function (err) {
-        t.ok(err);
-        error++;
-    })
-    .on('end', function () {
-        t.ok(error === 1);
-        t.end();
-    });
+/**
+ * Gets the size of `collection` by returning its length for array-like
+ * values or the number of own enumerable properties for objects.
+ *
+ * @static
+ * @memberOf _
+ * @category Collection
+ * @param {Array|Object|string} collection The collection to inspect.
+ * @returns {number} Returns the size of `collection`.
+ * @example
+ *
+ * _.size([1, 2, 3]);
+ * // => 3
+ *
+ * _.size({ 'a': 1, 'b': 2 });
+ * // => 2
+ *
+ * _.size('pebbles');
+ * // => 7
+ */
+function size(collection) {
+  var length = collection ? getLength(collection) : 0;
+  return isLength(length) ? length : keys(collection).length;
+}
 
-    stream.write('["foo":bar[');
-    stream.end();
-
-});
-
-test('#81 - failure to parse nested objects', function (t) {
-  var stream = JSONStream
-    .parse('.bar.foo')
-    .on('error', function (err) {
-      t.error(err);
-    })
-    .on('end', function () {
-      t.end();
-    });
-
-  stream.write('{"bar":{"foo":"baz"}}');
-  stream.end();
-});
+module.exports = size;

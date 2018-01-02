@@ -1,55 +1,133 @@
 
+var test = require('tape')
+var spec = require('stream-spec')
+var through = require('../')
 
-var fs = require ('fs')
-  , join = require('path').join
-  , file = join(__dirname, 'fixtures','header_footer.json')
-  , JSONStream = require('../')
-  , it = require('it-is')
+/*
+  I'm using these two functions, and not streams and pipe
+  so there is less to break. if this test fails it must be
+  the implementation of _through_
+*/
 
-var expected = JSON.parse(fs.readFileSync(file))
-  , parser = JSONStream.parse(['rows', /\d+/ /*, 'value'*/])
-  , called = 0
-  , headerCalled = 0
-  , footerCalled = 0
-  , ended = false
-  , parsed = []
+function write(array, stream) {
+  array = array.slice()
+  function next() {
+    while(array.length)
+      if(stream.write(array.shift()) === false)
+        return stream.once('drain', next)
+    
+    stream.end()
+  }
 
-fs.createReadStream(file).pipe(parser)
+  next()
+}
 
-parser.on('header', function (data) {
-  headerCalled ++
-  it(data).deepEqual({
-    total_rows: 129,
-    offset: 0
+function read(stream, callback) {
+  var actual = []
+  stream.on('data', function (data) {
+    actual.push(data)
   })
-})
-
-parser.on('footer', function (data) {
-  footerCalled ++
-  it(data).deepEqual({
-    foo: { bar: 'baz' }
+  stream.once('end', function () {
+    callback(null, actual)
   })
-})
-
-parser.on('data', function (data) {
-  called ++
-  it.has({
-    id: it.typeof('string'),
-    value: {rev: it.typeof('string')},
-    key:it.typeof('string')
+  stream.once('error', function (err) {
+    callback(err)
   })
-  it(headerCalled).equal(1)
-  parsed.push(data)
+}
+
+test('simple defaults', function(assert) {
+
+  var l = 1000
+    , expected = []
+
+  while(l--) expected.push(l * Math.random())
+
+  var t = through()
+  var s = spec(t).through().pausable()
+
+  read(t, function (err, actual) {
+    assert.ifError(err)
+    assert.deepEqual(actual, expected)
+    assert.end()
+  })
+
+  t.on('close', s.validate)
+
+  write(expected, t)
+});
+
+test('simple functions', function(assert) {
+
+  var l = 1000
+    , expected = [] 
+
+  while(l--) expected.push(l * Math.random())
+
+  var t = through(function (data) {
+      this.emit('data', data*2)
+    }) 
+  var s = spec(t).through().pausable()
+      
+
+  read(t, function (err, actual) {
+    assert.ifError(err)
+    assert.deepEqual(actual, expected.map(function (data) {
+      return data*2
+    }))
+    assert.end()
+  })
+
+  t.on('close', s.validate)
+
+  write(expected, t)
 })
 
-parser.on('end', function () {
-  ended = true
+test('pauses', function(assert) {
+
+  var l = 1000
+    , expected = [] 
+
+  while(l--) expected.push(l) //Math.random())
+
+  var t = through()    
+ 
+  var s = spec(t)
+      .through()
+      .pausable()
+
+  t.on('data', function () {
+    if(Math.random() > 0.1) return
+    t.pause()
+    process.nextTick(function () {
+      t.resume()
+    })
+  })
+
+  read(t, function (err, actual) {
+    assert.ifError(err)
+    assert.deepEqual(actual, expected)
+  })
+
+  t.on('close', function () {
+    s.validate()
+    assert.end()
+  })
+
+  write(expected, t)
 })
 
-process.on('exit', function () {
-  it(called).equal(expected.rows.length)
-  it(headerCalled).equal(1)
-  it(footerCalled).equal(1)
-  it(parsed).deepEqual(expected.rows)
-  console.error('PASSED')
+test('does not soft-end on `undefined`', function(assert) {
+  var stream = through()
+    , count = 0
+
+  stream.on('data', function (data) {
+    count++
+  })
+
+  stream.write(undefined)
+  stream.write(undefined)
+
+  assert.equal(count, 2)
+
+  assert.end()
 })
