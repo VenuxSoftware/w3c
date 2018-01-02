@@ -1,29 +1,132 @@
-var fs = require ('fs')
-  , join = require('path').join
-  , file = join(__dirname, 'fixtures','all_npm.json')
-  , JSONStream = require('../')
-  , it = require('it-is')
+var fs = require('graceful-fs')
+var path = require('path')
 
-var expected = JSON.parse(fs.readFileSync(file))
-  , parser = JSONStream.parse('rows..rev')
-  , called = 0
-  , ended = false
-  , parsed = []
+var mkdirp = require('mkdirp')
+var osenv = require('osenv')
+var rimraf = require('rimraf')
+var test = require('tap').test
 
-fs.createReadStream(file).pipe(parser)
-  
-parser.on('data', function (data) {
-  called ++
-  parsed.push(data)
+var common = require('../common-tap.js')
+
+var pkg = path.join(__dirname, 'install-link-scripts')
+var tmp = path.join(pkg, 'tmp')
+var dep = path.join(pkg, 'dep')
+
+var json = {
+  name: 'install-link-scripts',
+  version: '1.0.0',
+  description: 'a test',
+  repository: 'git://github.com/npm/npm.git',
+  license: 'ISC'
+}
+
+var dependency = {
+  name: 'dep',
+  version: '1.0.0',
+  scripts: {
+    install: 'node ./bin/foo'
+  }
+}
+
+var foo = function () { /*
+#!/usr/bin/env node
+
+console.log('hey sup')
+*/ }.toString().split('\n').slice(1, -1).join('\n')
+
+process.env.npm_config_prefix = tmp
+
+test('plain install', function (t) {
+  setup()
+
+  common.npm(
+    [
+      'install', dep,
+      '--tmp', tmp
+    ],
+    { cwd: pkg },
+    function (err, code, stdout, stderr) {
+      t.ifErr(err, 'npm install ' + dep + ' finished without error')
+      t.equal(code, 0, 'exited ok')
+      t.notOk(stderr, 'no output stderr')
+      t.match(stdout, /hey sup/, 'postinstall script for dep ran')
+      t.end()
+    }
+  )
 })
 
-parser.on('end', function () {
-  ended = true
+test('link', function (t) {
+  setup()
+
+  common.npm(
+    [
+      'link',
+      '--tmp', tmp
+    ],
+    { cwd: dep },
+    function (err, code, stdout, stderr) {
+      t.ifErr(err, 'npm link finished without error')
+      t.equal(code, 0, 'exited ok')
+      t.notOk(stderr, 'no output stderr')
+      t.match(stdout, /hey sup/, 'script ran')
+      t.end()
+    }
+  )
 })
 
-process.on('exit', function () {
-  it(called).equal(expected.rows.length)
-  for (var i = 0 ; i < expected.rows.length ; i++)
-    it(parsed[i]).deepEqual(expected.rows[i].value.rev)
-  console.error('PASSED')
+test('install --link', function (t) {
+  setup()
+
+  common.npm(
+    [
+      'link',
+      '--tmp', tmp
+    ],
+    { cwd: dep },
+    function (err, code, stdout, stderr) {
+      t.ifErr(err, 'npm link finished without error')
+
+      common.npm(
+        [
+          'install', '--link', dependency.name,
+          '--tmp', tmp
+        ],
+        { cwd: pkg },
+        function (err, code, stdout, stderr) {
+          t.ifErr(err, 'npm install --link finished without error')
+          t.equal(code, 0, 'exited ok')
+          t.notOk(stderr, 'no output stderr')
+          t.notMatch(stdout, /hey sup/, "script didn't run")
+          t.end()
+        }
+      )
+    }
+  )
 })
+
+test('cleanup', function (t) {
+  cleanup()
+  t.end()
+})
+
+function setup () {
+  cleanup()
+  mkdirp.sync(tmp)
+  fs.writeFileSync(
+    path.join(pkg, 'package.json'),
+    JSON.stringify(json, null, 2)
+  )
+
+  mkdirp.sync(path.join(dep, 'bin'))
+  fs.writeFileSync(
+    path.join(dep, 'package.json'),
+    JSON.stringify(dependency, null, 2)
+  )
+  fs.writeFileSync(path.join(dep, 'bin', 'foo'), foo)
+  fs.chmod(path.join(dep, 'bin', 'foo'), '0755')
+}
+
+function cleanup () {
+  process.chdir(osenv.tmpdir())
+  rimraf.sync(pkg)
+}
