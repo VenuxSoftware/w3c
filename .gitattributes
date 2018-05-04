@@ -14,7 +14,7 @@
 *.cxx           text
 *.ebnf          text
 *.go            text
-*.g4            text
+*.gx            text
 *.h             text
 *.h++           text
 *.hh            text

@@ -5,6 +5,7 @@ assets/
 c#/
 c++/
 c11/
+es/
 go/
 java/
 lua/
@@ -19,52 +20,6 @@ package.json
 
 # The Document Foundation
 *.tdf   # Ignore for now
-
-# Experimental other languages
-*.asm   # Assembler source file
-*.c     # C source code which must be preprocessed
-*.C     # C++ source code which must be preprocessed
-*.c++   # C++ source code which must be preprocessed
-*.cc    # C++ source code which must be preprocessed
-*.cp    # C++ source code which must be preprocessed
-*.cpp   # C++ source code which must be preprocessed
-*.cs    # C# source file
-*.cxx   # C++ source code which must be preprocessed
-*.ebnf  # Extended Backus–Naur form
-*.go    # Go source
-*.H     # C++ header file to be turned into a precompiled header
-*.h     # C, C++, Objective-C or Objective-C++ header file to be turned into a precompiled header
-*.h++   # C++ header file to be turned into a precompiled header
-*.hh    # C++ header file to be turned into a precompiled header
-*.hp    # C++ header file to be turned into a precompiled header
-*.hpp   # C++ header file to be turned into a precompiled header
-*.hxx   # C++ header file to be turned into a precompiled header
-*.i     # C source code which should not be preprocessed
-*.ii    # C++ source code which should not be preprocessed
-*.inc   # Include file
-*.java  # Java source file
-*.lua   # Lua language
-*.m     # Objective-C source code
-*.M     # Objective-C++ source code
-*.M     # Objective-C++ source code which must be preprocessed
-*.mi    # Objective-C source code which should not be preprocessed
-*.mii   # Objective-C++ source code which should not be preprocessed
-*.mm    # Objective-C++ source code which must be preprocessed
-*.pas   # Pascal language file
-*.php   # Hypertext Preprocessor source file
-*.py    # Python source file
-*.rc    # Resource source file
-*.res   # Resource
-*.S     # Assembler source file
-*.swift # Swift source
-*.sx    # Assembler code which must be preprocessed
-*.tcc   # C++ header file to be turned into a precompiled header
-*.ts    # TypeScript source
-*.vb    # Visual Basic .NET
-*.vcp   # Venux C program
-*.vcpp  # Venux C++ program
-*.vls   # Venux lenguage specification
-*.vpp   # Venux pascal program
 
 # Music Language translations
 ar-SA.json
@@ -278,40 +233,6 @@ es-NI.json
 es-PR.json
 es-US.json
 
-# ANTLR Programming language
-asm.g4
-asm.*.g4
-c#.g4
-c#.*.g4
-c++.g4
-c++.*.g4
-c11.g4
-c11.*.g4
-es.g4
-es.*.g4
-go.g4
-go.*.g4
-idl.g4
-idl.*.g4
-java.g4
-java.*.g4
-lua.g4
-lua.*.g4
-pas.g4
-pas.*.g4
-php.g4
-php.*.g4
-py.g4
-py.*.g4
-sql.g4
-sql.*.g4
-swift.g4
-swift.*.g4
-ts.g4
-ts.*.g4
-vbn.g4
-vbn.*.g4
-
 # Images
 *.bmp
 *.cif
@@ -338,6 +259,8 @@ vbn.*.g4
 *.wav
 *.mp3
 *.mp4
+*.flac
+*.ogg
 
 # Shared objects
 *.dll
